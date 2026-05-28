@@ -1,11 +1,13 @@
-use eframe::egui::{self, Layout};
-use egui::RichText; // RichText 中可以使用.size调整字体大小
+use eframe::egui::UiKind::Frame;
+use eframe::egui::{self, Color32, Layout};
+use eframe::epaint::color;
+use egui::RichText;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 
 use crate::fonts;
-use crate::todo::MyTodo;
+use crate::todo::{MyTodo, Theme_Color};
 
 // 存储文件路径
 static SAVE_PATH: &str = "save.todo";
@@ -32,24 +34,26 @@ impl MyApp {
 impl eframe::App for MyApp {
     // 每一帧都会被调用，负责绘制整个 UI
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        egui::Panel::top("顶部面板").show_inside(ui, |ui| {
-            // 输入框 逻辑
-            // horizontal 可将ui显示在同一行
-            ui.horizontal(|ui| {
-                ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
-                    ui.add_space(16.0);
-                    // 使用回车来添加待办
-                    let response = ui.text_edit_singleline(&mut self.user_input);
-                    // 当输入框失去焦点，并且内容不为空时，添加todo
-                    if response.lost_focus() && !self.user_input.trim().is_empty() {
-                        self.list.push(MyTodo::new(self.user_input.clone()));
-                        self.user_input.clear();
-                        response.request_focus(); // 请求焦点，实现再次输入
-                    }
-                    ui.add_space(8.0);
+        egui::Panel::top("顶部面板")
+            .frame(egui::Frame::NONE.fill(Color32::from_rgb(35, 35, 35))) // 背景颜色
+            .show_inside(ui, |ui| {
+                // 输入框 逻辑
+                // horizontal 可将ui显示在同一行
+                ui.horizontal(|ui| {
+                    ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
+                        ui.add_space(16.0);
+                        // 使用回车来添加待办
+                        let response = ui.text_edit_singleline(&mut self.user_input);
+                        // 当输入框失去焦点，并且内容不为空时，添加todo
+                        if response.lost_focus() && !self.user_input.trim().is_empty() {
+                            self.list.push(MyTodo::new(self.user_input.clone()));
+                            self.user_input.clear();
+                            response.request_focus(); // 请求焦点，实现再次输入
+                        }
+                        ui.add_space(8.0);
+                    });
                 });
             });
-        });
         egui::CentralPanel::default().show_inside(ui, |ui| {
             // 实现内容超出显示范围时可滚动的效果
             egui::ScrollArea::vertical().show(ui, |ui| {
