@@ -1,7 +1,6 @@
-use crate::fonts;
 use crate::todo::MyTodo;
-use eframe::egui::text_selection::visuals;
-use eframe::egui::{self, Color32, Layout};
+use crate::{app, fonts};
+use eframe::egui::{self, Layout};
 use egui::RichText;
 use std::fs;
 use std::fs::OpenOptions;
@@ -9,6 +8,7 @@ use std::io::Write;
 
 // 存储文件路径
 static SAVE_PATH: &str = "save.todo";
+static THEME_SAVE_PATH: &str = "theme_save.todo";
 
 #[derive(Default)]
 pub struct MyApp {
@@ -26,7 +26,6 @@ impl MyApp {
         if let Err(e) = read_save(&mut app) {
             eprintln!("读取时发生错误:{}", e);
         }
-        app.is_dark_theme = true;
         app
     }
 }
@@ -36,7 +35,6 @@ impl eframe::App for MyApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         egui::Panel::top("顶部面板").show_inside(ui, |ui| {
             // 输入框 逻辑
-            // horizontal 可将ui显示在同一行
             ui.horizontal(|ui| {
                 ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
                     ui.add_space(16.0);
@@ -53,13 +51,21 @@ impl eframe::App for MyApp {
                 ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.add_space(16.0);
                     // 切换主题
-                    let visuals = if self.is_dark_theme {
+                    let mut visuals = if self.is_dark_theme {
                         egui::Visuals::dark()
                     } else {
                         egui::Visuals::light()
                     };
-                    ui.ctx().set_visuals(visuals);
-                    let theme_ico = if self.is_dark_theme { "☀" } else { "🌙" };
+                    if !self.is_dark_theme {
+                        visuals.panel_fill = egui::Color32::from_rgb(225, 225, 225);
+                    }
+                    ui.ctx().set_visuals(visuals); // 渲染主题
+                    // 切换主题的按钮图标
+                    let theme_ico = if self.is_dark_theme {
+                        " ☀ "
+                    } else {
+                        " 🌙 "
+                    };
                     if ui.button(RichText::new(theme_ico).size(15.0)).clicked() {
                         self.is_dark_theme = !self.is_dark_theme;
                     }
@@ -73,8 +79,12 @@ impl eframe::App for MyApp {
                 // 没有代办时显示
                 if self.list.is_empty() {
                     ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
-                        ui.add_space(10.0);
-                        ui.label(RichText::new("当前没有任何代办").size(25.0));
+                        ui.add_space(30.0);
+                        ui.label(
+                            RichText::new("当前没有任何代办")
+                                .size(25.0)
+                                .color(egui::Color32::GRAY),
+                        );
                     });
                 }
                 // 显示未完成的todo
@@ -135,6 +145,7 @@ impl eframe::App for MyApp {
 
 // 保存函数
 fn save(my_app: &MyApp) -> std::io::Result<()> {
+    // todo保存
     let mut file = OpenOptions::new()
         .create(true)
         .write(true)
@@ -145,10 +156,22 @@ fn save(my_app: &MyApp) -> std::io::Result<()> {
         let line = format!("{},{}\n", todo.todo_name, todo.is_finish);
         file.write_all(line.as_bytes())?;
     }
+
+    // 主题保存
+    let mut theme = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(THEME_SAVE_PATH)?;
+
+    let theme_state = format!("{}", my_app.is_dark_theme);
+    theme.write_all(theme_state.as_bytes())?;
+
     Ok(())
 }
 /// 从文件读取
 fn read_save(my_app: &mut MyApp) -> std::io::Result<()> {
+    // todo读取
     let s = fs::read_to_string(SAVE_PATH)?;
     my_app.list.clear();
     for line in s.lines() {
@@ -159,5 +182,8 @@ fn read_save(my_app: &mut MyApp) -> std::io::Result<()> {
             });
         }
     }
+    // 主题读取
+    let t = fs::read_to_string(THEME_SAVE_PATH)?;
+    my_app.is_dark_theme = t.trim().parse::<bool>().unwrap_or(true); // 将String转换成bool
     Ok(())
 }
