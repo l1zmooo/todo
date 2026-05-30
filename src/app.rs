@@ -102,8 +102,9 @@ impl eframe::App for MyApp {
                                 if ui.button(RichText::new("删除").size(15.0)).clicked() {
                                     remove_indices.push(idx);
                                 }
-                            })
+                            });
                         });
+                        ui.add_space(3.0);
                     };
                 }
                 // 当有已完成的 todo 时显示标签
@@ -125,6 +126,7 @@ impl eframe::App for MyApp {
                                 }
                             })
                         });
+                        ui.add_space(3.0);
                     }
                 }
                 // 倒序删除，避免索引偏移
