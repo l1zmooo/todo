@@ -1,5 +1,5 @@
+use crate::fonts;
 use crate::todo::MyTodo;
-use crate::{app, fonts};
 use eframe::egui::{self, Layout};
 use egui::RichText;
 use std::fs;
@@ -56,6 +56,7 @@ impl eframe::App for MyApp {
                     } else {
                         egui::Visuals::light()
                     };
+                    // 亮色主题颜色设置
                     if !self.is_dark_theme {
                         visuals.panel_fill = egui::Color32::from_rgb(225, 225, 225);
                     }
