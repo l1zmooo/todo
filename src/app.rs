@@ -2,6 +2,7 @@ use crate::fonts;
 use crate::todo::MyTodo;
 use eframe::egui::{self, Layout};
 use egui::RichText;
+use image;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -74,6 +75,7 @@ impl eframe::App for MyApp {
                 });
             });
         });
+        // 中部面板
         egui::CentralPanel::default().show_inside(ui, |ui| {
             // 实现内容超出显示范围时可滚动的效果
             egui::ScrollArea::vertical().show(ui, |ui| {
@@ -189,4 +191,17 @@ fn read_save(my_app: &mut MyApp) -> std::io::Result<()> {
     let t = fs::read_to_string(THEME_SAVE_PATH)?;
     my_app.is_dark_theme = t.trim().parse::<bool>().unwrap_or(true); // 将String转换成bool
     Ok(())
+}
+
+// 更换图标函数,需使用ico文件
+pub fn load_icon() -> egui::IconData {
+    let image = image::load_from_memory(include_bytes!("../assets/futaba.ico"))
+        .unwrap()
+        .into_rgba8();
+    let (width, height) = image.dimensions();
+    egui::IconData {
+        rgba: image.into_raw(),
+        width,
+        height,
+    }
 }
