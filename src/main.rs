@@ -11,13 +11,16 @@ fn main() {
     let native_options = eframe::NativeOptions {
         // 设置窗口最小值
         viewport: egui::ViewportBuilder::default()
+            .with_decorations(false) // 窗口边框
             .with_icon(icon) // 更换默认图标
             .with_min_inner_size(egui::vec2(500.0, 300.0)),
         ..Default::default()
     };
-    eframe::run_native(
+    if let Err(e1) = eframe::run_native(
         "Todo",
         native_options,
         Box::new(|cc| Ok(Box::new(app::MyApp::new(cc)))),
-    );
+    ) {
+        eprintln!("错误:{}", e1);
+    };
 }

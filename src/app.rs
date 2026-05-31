@@ -1,6 +1,6 @@
 use crate::fonts;
 use crate::todo::MyTodo;
-use eframe::egui::{self, Layout};
+use eframe::egui::{self, Layout, ViewportCommand};
 use egui::RichText;
 use image;
 use std::fs;
@@ -35,10 +35,95 @@ impl eframe::App for MyApp {
     // 每一帧都会被调用，负责绘制整个 UI
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         egui::Panel::top("顶部面板").show_inside(ui, |ui| {
-            // 输入框 逻辑
             ui.horizontal(|ui| {
                 ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
-                    ui.add_space(16.0);
+                    let logo = ui.add(
+                        egui::Label::new(RichText::new("Todo").size(30.0))
+                            .selectable(false)
+                            .sense(egui::Sense::drag()), // 捕获鼠标交互事件
+                    );
+                    // 拖动窗口实现
+                    if logo.drag_started() {
+                        ui.send_viewport_cmd(ViewportCommand::StartDrag);
+                    }
+                });
+                ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add_space(5.0);
+                    // 关闭按钮
+                    if ui.button(RichText::new(" ❌ ").size(20.0)).clicked() {
+                        ui.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                    // 最大化按钮
+                    if ui.button(RichText::new(" ⭕ ").size(20.0)).clicked() {
+                        let max = ui.ctx().input(|i| i.viewport().maximized).unwrap();
+                        ui.send_viewport_cmd(egui::ViewportCommand::Maximized(!max));
+                    }
+                    // 最小化按钮
+                    if ui.button(RichText::new(" ➖ ").size(20.0)).clicked() {
+                        ui.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                    }
+                    ui.add_space(5.0);
+                    ui.separator();
+                    ui.add_space(5.0);
+                });
+            });
+        });
+        egui::Panel::bottom("底部面板")
+            .max_size(30.0)
+            .show_inside(ui, |ui| {
+                ui.horizontal(|ui| {
+                    // 显示未完成的todo数量
+                    let mut unfinished_todo: u32 = 0;
+                    for i in &self.list {
+                        if !i.is_finish {
+                            unfinished_todo += 1;
+                        }
+                        if unfinished_todo != 0 {
+                            ui.with_layout(Layout::left_to_right(egui::Align::Center), |ui| {
+                                ui.add(
+                                    egui::Label::new(
+                                        RichText::new(format!(
+                                            "当前有{}条代办未完成",
+                                            unfinished_todo
+                                        ))
+                                        .size(15.0),
+                                    )
+                                    .selectable(false),
+                                )
+                            });
+                        }
+                    }
+                    ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(3.0);
+                        // 切换主题
+                        let mut visuals = if self.is_dark_theme {
+                            egui::Visuals::dark()
+                        } else {
+                            egui::Visuals::light()
+                        };
+                        // 亮色主题颜色设置
+                        if !self.is_dark_theme {
+                            visuals.panel_fill = egui::Color32::from_rgb(225, 225, 225);
+                        }
+                        ui.ctx().set_visuals(visuals); // 渲染主题
+                        // 切换主题的按钮图标
+                        let theme_ico = if self.is_dark_theme {
+                            " ☀ "
+                        } else {
+                            " 🌙 "
+                        };
+                        if ui.button(RichText::new(theme_ico).size(17.0)).clicked() {
+                            self.is_dark_theme = !self.is_dark_theme;
+                        }
+                    });
+                });
+            });
+        // 中部面板
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            // 实现内容超出显示范围时可滚动的效果
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
+                    // 输入框 逻辑
                     // 使用回车来添加待办
                     let response = ui.text_edit_singleline(&mut self.user_input);
                     // 当输入框失去焦点，并且内容不为空时，添加todo
@@ -47,47 +132,21 @@ impl eframe::App for MyApp {
                         self.user_input.clear();
                         response.request_focus(); // 请求焦点，实现再次输入
                     }
-                    ui.add_space(8.0);
                 });
-                ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.add_space(16.0);
-                    // 切换主题
-                    let mut visuals = if self.is_dark_theme {
-                        egui::Visuals::dark()
-                    } else {
-                        egui::Visuals::light()
-                    };
-                    // 亮色主题颜色设置
-                    if !self.is_dark_theme {
-                        visuals.panel_fill = egui::Color32::from_rgb(225, 225, 225);
-                    }
-                    ui.ctx().set_visuals(visuals); // 渲染主题
-                    // 切换主题的按钮图标
-                    let theme_ico = if self.is_dark_theme {
-                        " ☀ "
-                    } else {
-                        " 🌙 "
-                    };
-                    if ui.button(RichText::new(theme_ico).size(15.0)).clicked() {
-                        self.is_dark_theme = !self.is_dark_theme;
-                    }
-                    ui.add_space(8.0);
-                });
-            });
-        });
-        // 中部面板
-        egui::CentralPanel::default().show_inside(ui, |ui| {
-            // 实现内容超出显示范围时可滚动的效果
-            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.add_space(5.0);
                 // 没有代办时显示
                 if self.list.is_empty() {
                     ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
                         ui.add_space(30.0);
-                        ui.label(
-                            RichText::new("当前没有任何代办")
-                                .size(25.0)
-                                .color(egui::Color32::GRAY),
+                        let logo2 = ui.add(
+                            egui::Label::new(RichText::new("当前没有任何代办").size(25.0))
+                                .selectable(false)
+                                .sense(egui::Sense::drag()), // 捕获鼠标交互事件
                         );
+                        // 拖动窗口实现
+                        if logo2.drag_started() {
+                            ui.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+                        }
                     });
                 }
                 // 显示未完成的todo
@@ -99,7 +158,11 @@ impl eframe::App for MyApp {
                             if ui.button(RichText::new("□").size(15.0)).clicked() {
                                 todo.is_finish = true;
                             }
-                            ui.label(RichText::new(todo.todo_name.clone()).size(15.0));
+                            ui.add(
+                                egui::Label::new(RichText::new(todo.todo_name.clone()).size(15.0))
+                                    .selectable(false),
+                            );
+
                             ui.with_layout(Layout::top_down(egui::Align::RIGHT), |ui| {
                                 if ui.button(RichText::new("删除").size(15.0)).clicked() {
                                     remove_indices.push(idx);
@@ -148,6 +211,8 @@ impl eframe::App for MyApp {
     }
 }
 
+// === 函数定义 ===
+
 // 保存函数
 fn save(my_app: &MyApp) -> std::io::Result<()> {
     // todo保存
@@ -192,7 +257,6 @@ fn read_save(my_app: &mut MyApp) -> std::io::Result<()> {
     my_app.is_dark_theme = t.trim().parse::<bool>().unwrap_or(true); // 将String转换成bool
     Ok(())
 }
-
 // 更换图标函数,需使用ico文件
 pub fn load_icon() -> egui::IconData {
     let image = image::load_from_memory(include_bytes!("../assets/futaba.ico"))
