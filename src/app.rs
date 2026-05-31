@@ -38,7 +38,7 @@ impl eframe::App for MyApp {
             ui.horizontal(|ui| {
                 ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
                     let logo = ui.add(
-                        egui::Label::new(RichText::new("Todo").size(30.0))
+                        egui::Label::new(RichText::new("Todo").size(35.0))
                             .selectable(false)
                             .sense(egui::Sense::drag()), // 捕获鼠标交互事件
                     );
@@ -152,16 +152,16 @@ impl eframe::App for MyApp {
                     if todo.is_finish == false {
                         // horizontal 可将ui显示在同一行
                         ui.horizontal(|ui| {
-                            if ui.button(RichText::new("□").size(15.0)).clicked() {
+                            if ui.button(RichText::new("□").size(20.0)).clicked() {
                                 todo.is_finish = true;
                             }
                             ui.add(
-                                egui::Label::new(RichText::new(todo.todo_name.clone()).size(15.0))
+                                egui::Label::new(RichText::new(todo.todo_name.clone()).size(20.0))
                                     .selectable(false),
                             );
 
                             ui.with_layout(Layout::top_down(egui::Align::RIGHT), |ui| {
-                                if ui.button(RichText::new("删除").size(15.0)).clicked() {
+                                if ui.button(RichText::new("删除").size(20.0)).clicked() {
                                     remove_indices.push(idx);
                                 }
                             });
@@ -171,19 +171,19 @@ impl eframe::App for MyApp {
                 }
                 // 当有已完成的 todo 时显示标签
                 if self.list.iter().any(|t| t.is_finish) {
-                    ui.label(RichText::new("已完成：").size(15.0));
+                    ui.label(RichText::new("已完成：").size(20.0));
                 }
                 // 显示已完成的todo
                 for (idx, todo) in &mut self.list.iter_mut().enumerate() {
                     if todo.is_finish == true {
                         // horizontal 可将ui显示在同一行
                         ui.horizontal(|ui| {
-                            if ui.button(RichText::new("■").size(15.0)).clicked() {
+                            if ui.button(RichText::new("■").size(20.0)).clicked() {
                                 todo.is_finish = false;
                             }
-                            ui.label(RichText::new(todo.todo_name.clone()).size(15.0));
+                            ui.label(RichText::new(todo.todo_name.clone()).size(20.0));
                             ui.with_layout(Layout::top_down(egui::Align::RIGHT), |ui| {
-                                if ui.button(RichText::new("删除").size(15.0)).clicked() {
+                                if ui.button(RichText::new("删除").size(20.0)).clicked() {
                                     remove_indices.push(idx);
                                 }
                             })

@@ -13,7 +13,9 @@ fn main() {
         viewport: egui::ViewportBuilder::default()
             .with_decorations(false) // 窗口边框
             .with_icon(icon) // 更换默认图标
-            .with_min_inner_size(egui::vec2(500.0, 300.0)),
+            .with_min_inner_size(egui::vec2(600.0, 400.0))
+            .with_position(egui::pos2(1920.0 / 4.0 - 125.0, 1080.0 / 4.0 - 100.0)), // 窗口打开位置,
+
         ..Default::default()
     };
     if let Err(e1) = eframe::run_native(
