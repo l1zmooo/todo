@@ -78,20 +78,17 @@ impl eframe::App for MyApp {
                         if !i.is_finish {
                             unfinished_todo += 1;
                         }
-                        if unfinished_todo != 0 {
-                            ui.with_layout(Layout::left_to_right(egui::Align::Center), |ui| {
-                                ui.add(
-                                    egui::Label::new(
-                                        RichText::new(format!(
-                                            "当前有{}条代办未完成",
-                                            unfinished_todo
-                                        ))
+                    }
+                    if unfinished_todo != 0 {
+                        ui.with_layout(Layout::left_to_right(egui::Align::Center), |ui| {
+                            ui.add(
+                                egui::Label::new(
+                                    RichText::new(format!("当前有{}条代办未完成", unfinished_todo))
                                         .size(15.0),
-                                    )
-                                    .selectable(false),
                                 )
-                            });
-                        }
+                                .selectable(false),
+                            )
+                        });
                     }
                     ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_space(3.0);
